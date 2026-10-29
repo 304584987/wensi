@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#8a6a48">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="文思">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>文思 · AI 小说创作</title>
+<style>
+:root{--bg:#f6f0e4;--panel:#fbf7ee;--card:#fffdf7;--text:#3b3127;--sub:#8a7a66;--line:#e6dcc8;--acc:#8a6a48;--acc2:#b98b5e;--ok:#5f8a5a;--warn:#c0843c;--danger:#b5534a;--shadow:0 2px 12px rgba(90,70,40,.08);
+--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);--nav:60px;font-size:16px}
+[data-theme=dark]{--bg:#1d1b18;--panel:#24211d;--card:#2b2823;--text:#e3dacb;--sub:#9a8f7f;--line:#3a352e;--acc:#c9a27a;--acc2:#d9b48c;--shadow:0 2px 12px rgba(0,0,0,.3)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;white-space:nowrap;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:0 14px;min-height:44px}
+button.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+button.ghost{background:transparent;border-color:transparent}
+button.sm{min-height:34px;padding:0 10px;font-size:14px}
+button.danger{color:var(--danger)}
+input,select,textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--acc2)}
+label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+#app{display:flex;height:100%;}
+nav#tabs{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav) + var(--sab));padding-bottom:var(--sab);display:flex;background:var(--panel);border-top:1px solid var(--line);z-index:20}
+nav#tabs button{flex:1;border:0;background:none;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--sub);padding:0}
+nav#tabs button .i{font-size:20px;line-height:1}
+nav#tabs button.on{color:var(--acc);font-weight:600}
+main{flex:1;min-width:0;height:100%;}
+.view{display:none;height:100%;flex-direction:column;padding-top:var(--sat);padding-bottom:calc(var(--nav) + var(--sab))}
+.view.on{display:flex}
+header.bar{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:54px;border-bottom:1px solid var(--line);background:var(--panel)}
+header.bar h1{font-size:18px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"Noto Serif CJK SC","Songti SC",serif}
+.scroll{flex:1;overflow:auto;padding:12px;-webkit-overflow-scrolling:touch}
+.wrap{max-width:820px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 6px;font-size:16px}
+.muted{color:var(--sub);font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{flex:0 0 auto}.grow{flex:1 1 auto!important;min-width:0}
+.list-item{display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line);min-height:52px}
+.list-item:last-child{border-bottom:0}
+.list-item.cur{background:color-mix(in srgb,var(--acc) 10%,transparent);border-radius:8px}
+.tag{font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+.st-草稿{color:var(--sub)}.st-已完成{color:var(--warn);border-color:var(--warn)}.st-已发布{color:var(--ok);border-color:var(--ok)}
+.progress{height:8px;background:var(--line);border-radius:8px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--acc2);transition:width .3s}
+#editor{flex:1;border:0;border-radius:0;resize:none;padding:18px max(16px,calc(50% - 380px));font-size:var(--efs,18px);line-height:1.9;background:var(--card);font-family:"Noto Serif CJK SC","Songti SC",serif;min-height:0}
+#edTitle{border:0;background:transparent;font-weight:600;font-size:17px;padding:4px;min-height:36px}
+.edfoot{display:flex;gap:8px;align-items:center;padding:6px 12px;border-top:1px solid var(--line);background:var(--panel);font-size:13px;color:var(--sub);flex-wrap:wrap}
+.fab{position:fixed;right:16px;bottom:calc(var(--nav) + var(--sab) + 52px);width:56px;height:56px;border-radius:50%;background:var(--acc);color:#fff;border:0;font-size:22px;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:15;display:none}
+#v-write.on~.fab,.fab.show{display:block}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;background:var(--panel);border-radius:18px 18px 0 0;z-index:41;transform:translateY(105%);transition:transform .25s;display:flex;flex-direction:column;padding-bottom:var(--sab);max-width:760px;margin:0 auto}
+.sheet.on{transform:none}.sheet-bg.on{display:block}
+.sheet .grab{width:40px;height:5px;border-radius:5px;background:var(--line);margin:8px auto}
+.sheet .hd{display:flex;align-items:center;padding:0 14px 8px;gap:8px}.sheet .hd b{flex:1;font-size:17px}
+.sheet .bd{overflow:auto;padding:0 14px 14px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.grid button{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;padding:4px}
+.grid button span{font-size:20px}
+.out{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px;max-height:40vh;overflow:auto;line-height:1.8;font-family:"Noto Serif CJK SC",serif}
+.msgs{flex:1;overflow:auto;padding:12px}
+.msg{max-width:88%;margin:8px 0;padding:10px 12px;border-radius:14px;white-space:pre-wrap;line-height:1.7;word-break:break-word}
+.msg.u{margin-left:auto;background:var(--acc);color:#fff;border-bottom-right-radius:4px}
+.msg.a{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg .ops{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+.chatin{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--line);background:var(--panel);align-items:flex-end}
+.chatin textarea{min-height:44px;max-height:30vh;resize:none}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{border:0;border-radius:0;flex:1;min-height:40px}.seg button.on{background:var(--acc);color:#fff}
+#toast{position:fixed;left:50%;top:calc(var(--sat) + 16px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:24px;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none;font-size:14px}
+#toast.on{opacity:.92}
+.note{font-size:13px;background:color-mix(in srgb,var(--ok) 12%,transparent);border-radius:10px;padding:8px 10px;color:var(--text)}
+.switch{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);margin:8px 0}.switch input{width:20px;min-height:20px;height:20px}
+details summary{cursor:pointer;padding:8px 0;font-weight:600}
+@media(min-width:900px){
+ nav#tabs{position:static;flex-direction:column;width:84px;height:100%;border-top:0;border-right:1px solid var(--line);padding:calc(var(--sat) + 12px) 0 0;justify-content:flex-start;gap:4px}
+ nav#tabs button{flex:0 0 72px}
+ .view{padding-bottom:0}
+ .fab{bottom:28px;right:28px}
+ .sheet{left:84px;border-radius:18px 18px 0 0}
+ #v-write .split{display:flex;flex-direction:row!important;flex:1;min-height:0}
+ #chapSide{display:block!important;width:250px;border-right:1px solid var(--line);overflow:auto;background:var(--panel);padding:8px}
+ #btnChaps{display:none}
+}
+#chapSide{display:none}
+.split{display:flex;flex-direction:column;flex:1;min-height:0}.edcol{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+</style>
+</head>
+<body>
+<div id="app">
+<nav id="tabs">
+ <button data-t="works"><span class="i">📚</span>作品</button>
+ <button data-t="write"><span class="i">✍️</span>写作</button>
+ <button data-t="bible"><span class="i">📖</span>设定集</button>
+ <button data-t="ai"><span class="i">💬</span>AI助手</button>
+ <button data-t="settings"><span class="i">⚙️</span>设置</button>
+</nav>
+<main>
+<!-- 作品 -->
+<section class="view" id="v-works">
+ <header class="bar"><h1>文思</h1><button class="sm" onclick="newProject()">＋ 新建作品</button></header>
+ <div class="scroll"><div class="wrap">
+  <div class="card"><div class="row"><b class="grow">今日码字</b><span id="goalTxt" class="muted"></span></div>
+   <div class="progress" style="margin-top:8px"><i id="goalBar"></i></div></div>
+  <div id="projList"></div>
+ </div></div>
+</section>
+<!-- 写作 -->
+<section class="view" id="v-write">
+ <header class="bar">
+  <button class="sm ghost" id="btnChaps" onclick="openSheet('chapSheet')">☰ 章节</button>
+  <input id="edTitle" class="grow" placeholder="章节标题">
+  <select id="edStatus" style="width:auto;min-height:36px;padding:4px 8px"><option>草稿</option><option>已完成</option><option>已发布</option></select>
+  <button class="sm" onclick="copyChapter()" title="一键复制发布">📋 复制</button>
+ </header>
+ <div class="split">
+  <aside id="chapSide"></aside>
+  <div class="edcol">
+   <textarea id="editor" placeholder="在这里开始写作……&#10;&#10;选中文字或把光标放在某处，点右下角 ✨ 召唤 AI。"></textarea>
+   <div class="edfoot"><span id="wcChap">本章 0 字</span>·<span id="wcBook">全书 0 字</span>·<span id="wcToday">今日 0</span><span class="grow"></span><span id="saveState">已保存</span>
+    <button class="sm ghost" onclick="undoAI()" id="btnUndo" style="display:none">↶ 撤销AI</button></div>
+  </div>
+ </div>
+</section>
+<!-- 设定集 -->
+<section class="view" id="v-bible">
+ <header class="bar"><h1>设定集</h1><label class="switch" style="margin:0"><input type="checkbox" id="injectBible">注入AI上下文</label></header>
+ <div class="scroll"><div class="wrap">
+  <div class="seg" id="bibleSeg" style="margin-bottom:12px"><button data-b="info" class="on">作品信息</button><button data-b="characters">人物</button><button data-b="world">世界观</button><button data-b="outline">大纲</button></div>
+  <div id="bibleBody"></div>
+ </div></div>
+</section>
+<!-- AI助手 -->
+<section class="view" id="v-ai">
+ <header class="bar"><h1>AI 助手</h1><label class="switch" style="margin:0"><input type="checkbox" id="chatCtx" checked>带上本章</label><select class="qp" style="width:auto;min-height:36px;padding:4px 8px;max-width:30vw"></select><button class="sm ghost" onclick="clearChat()">清空</button></header>
+ <div class="msgs" id="msgs"></div>
+ <div class="chatin"><textarea id="chatInput" rows="1" placeholder="和 AI 讨论剧情、人物、卡文……"></textarea><button class="pri" id="chatSend" onclick="sendChat()">发送</button></div>
+</section>
+<!-- 设置 -->
+<section class="view" id="v-settings">
+ <header class="bar"><h1>设置</h1></header>
+ <div class="scroll"><div class="wrap">
+  <div class="card"><h3>🤖 模型接入（OpenAI 兼容接口）</h3>
+   <div class="note">🔒 API Key 只保存在本机浏览器 localStorage，直接从浏览器发往你配置的接口，不经过任何第三方服务器。</div>
+   <label>预设</label><div class="row" style="flex-wrap:nowrap"><select id="presetSel" class="grow"></select><button class="sm" onclick="addPreset()">＋</button><button class="sm danger" onclick="delPreset()">删</button></div>
+   <label>预设名称</label><input id="p_name">
+   <label>Base URL（接口根地址，不含 /chat/completions）</label><input id="p_base" placeholder="https://api.openai.com/v1">
+   <label>API Key</label><input id="p_key" type="password" placeholder="sk-...（Ollama 可留空）" autocomplete="off">
+   <label>模型名称</label><input id="p_model" placeholder="gpt-4o-mini / deepseek-chat ..."><div class="muted" id="modelHint"></div>
+   <div class="row"><div class="grow"><label>温度 temperature</label><input id="p_temp" type="number" step="0.1" min="0" max="2"></div><div class="grow"><label>最大 tokens</label><input id="p_max" type="number" step="100"></div></div>
+   <div class="row" style="margin-top:12px"><button class="pri" onclick="savePreset()">保存</button><button onclick="testConn()">测试连接</button><span id="testRes" class="muted grow"></span></div>
+  </div>
+  <div class="card"><h3>✍️ 写作</h3>
+   <label>每日目标字数</label><input id="goalIn" type="number" step="500">
+   <label>编辑器字号</label><input id="fsIn" type="range" min="14" max="26" style="padding:0">
+   <label>主题</label><div class="seg" id="themeSeg"><button data-v="light">☀️ 纸张</button><button data-v="dark">🌙 夜间</button><button data-v="auto">跟随系统</button></div>
+  </div>
+  <div class="card"><h3>📋 发布格式（复制 / 导出 TXT）</h3>
+   <label class="switch"><input type="checkbox" id="fIndent">段首缩进两个全角空格「　　」</label>
+   <label class="switch"><input type="checkbox" id="fBlank">段落之间空一行</label>
+   <label class="switch"><input type="checkbox" id="fTitle">复制时包含章节标题</label>
+   <div class="muted">起点/番茄等平台一般：缩进 + 不空行（平台自动排版）。自动清理多余空格与空行。</div>
+  </div>
+  <div class="card"><h3>📦 导入 / 导出</h3>
+   <div class="row"><button onclick="exportJSON()">备份当前作品 JSON</button><button onclick="exportAllJSON()">备份全部</button><button onclick="$('#impFile').click()">导入 JSON</button></div>
+   <div class="row" style="margin-top:8px"><button onclick="exportBook('txt')">全书 TXT</button><button onclick="exportBook('md')">全书 Markdown</button><button onclick="exportChapter('txt')">本章 TXT</button><button onclick="exportChapter('md')">本章 MD</button></div>
+   <input type="file" id="impFile" accept=".json,application/json" style="display:none">
+  </div>
+  <div class="card"><h3>🎭 题材风格提示词</h3><div class="muted">按作品所选题材注入到所有 AI 操作与对话中</div><div id="genreList"></div><button class="sm" onclick="if(confirm('恢复默认题材提示词？')){S.genres={...S.genres,...GENRES};save();renderSettings()}" style="margin-top:8px">恢复默认题材提示词</button></div>
+  <div class="card"><h3>🧩 提示词模板</h3><div class="muted">可用变量：{{selection}} 选中文字、{{before}} 光标前文、{{after}} 光标后文、{{extra}} 附加要求、{{chapter}} 本章全文、{{title}} 章节名</div>
+   <div id="tplList"></div><button class="sm" onclick="resetTpl()" style="margin-top:8px">恢复默认模板</button></div>
+  <div class="muted" style="text-align:center;padding:12px">文思 · 数据仅存于本机 · <span id="storeSize"></span></div>
+ </div></div>
+</section>
+</main>
+</div>
+<button class="fab" id="fab" onclick="openAI()">✨</button>
+
+<div class="sheet-bg" id="sheetBg" onclick="closeSheets()"></div>
+<div class="sheet" id="chapSheet"><div class="grab"></div><div class="hd"><b>章节</b><button class="sm" onclick="closeSheets()">完成</button></div><div class="bd" id="chapSheetBody"></div></div>
+<div class="sheet" id="aiSheet"><div class="grab"></div>
+ <div class="hd"><b id="aiTitle">✨ AI 辅助</b><span class="muted" id="aiSelInfo"></span><select class="qp" style="width:auto;min-height:36px;padding:4px 8px;max-width:40vw"></select><button class="sm" onclick="closeSheets()">关闭</button></div>
+ <div class="bd">
+  <div class="grid" id="aiGrid"></div>
+  <label>附加要求（可选）</label><input id="aiExtra" placeholder="如：风格偏古龙、多写心理活动、500字左右">
+  <div id="aiOutWrap" style="display:none;margin-top:12px">
+   <div class="out" id="aiOut"></div>
+   <div class="row" style="margin-top:8px">
+    <button class="sm danger" id="aiStop" onclick="stopGen()">■ 停止</button>
+    <button class="sm pri" onclick="applyAI('insert')">插入光标处</button>
+    <button class="sm" onclick="applyAI('replace')">替换选中</button>
+    <button class="sm" onclick="applyAI('append')">追加末尾</button>
+    <button class="sm" onclick="copyText($('#aiOut').textContent)">复制</button>
+    <button class="sm" onclick="runAction(lastAction)">重试</button>
+   </div>
+  </div>
+ </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const wc=t=>(t||'').replace(/\s/g,'').length;
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1800)}
+
+const DEF_PRESETS=[
+ {id:'openai',name:'OpenAI',base:'https://api.openai.com/v1',key:'',model:'gpt-4o-mini',temp:0.8,max:2000},
+ {id:'deepseek',name:'DeepSeek',base:'https://api.deepseek.com/v1',key:'',model:'deepseek-chat',temp:1.0,max:2000},
+ {id:'qwen',name:'通义千问',base:'https://dashscope.aliyuncs.com/compatible-mode/v1',key:'',model:'qwen-plus',temp:0.8,max:2000},
+ {id:'kimi',name:'Kimi',base:'https://api.moonshot.cn/v1',key:'',model:'moonshot-v1-8k',temp:0.7,max:2000},
+ {id:'glm',name:'智谱 GLM',base:'https://open.bigmodel.cn/api/paas/v4',key:'',model:'glm-4-flash',temp:0.8,max:2000},
+ {id:'doubao',name:'豆包（火山方舟）',base:'https://ark.cn-beijing.volces.com/api/v3',key:'',model:'doubao-seed-1-6-250615',temp:0.8,max:2000},
+ {id:'ollama',name:'Ollama 本地',base:'http://localhost:11434/v1',key:'',model:'qwen2.5:7b',temp:0.8,max:2000}];
+const GENRES={
+ '都市':'本作为都市题材网文。注重现实质感与生活细节，节奏明快，爽点密集（打脸、逆袭、身份反转），对话口语化、接地气，人物动机贴近当代社会。',
+ '官场':'本作为官场题材。语言含蓄克制，重视体制内规矩、层级关系与人情世故；冲突多藏在话里话外，注重权谋博弈、站队与布局，细节真实可信，避免脸谱化。',
+ '玄幻':'本作为东方玄幻。境界体系清晰、升级感强，战斗场面有画面感与气势，世界宏大，设定前后一致；保持主角成长线和爽点节奏。',
+ '仙侠':'本作为仙侠题材。文风可略带古典韵味，重修行境界、宗门、法宝、因果与道心，意境空灵，兼顾江湖情义与长生大道。',
+ '武侠':'本作为武侠题材。重江湖规矩、侠义恩怨，招式描写干净利落有意境，语言可带古风，人物快意恩仇。',
+ '历史':'本作为历史题材。尊重时代背景的器物、官制、称谓与语言习惯，避免现代用语穿帮；权谋与民生细节并重。',
+ '科幻':'本作为科幻题材。设定需逻辑自洽、有科学依据或合理推演，注重技术细节与对人性、社会的思考，营造宏大或冷峻的氛围。',
+ '悬疑':'本作为悬疑推理。重视线索铺设与伏笔回收，信息逐步揭示，保持紧张感与反转；逻辑严密，不随意降智。',
+ '言情':'本作为言情题材。细腻刻画人物情绪与心理变化，感情线循序渐进，多用对话与小动作表现暧昧与张力，甜虐有度。',
+ '游戏':'本作为游戏/网游题材。系统面板、技能、副本、数值描写清楚，节奏紧凑，战斗与策略有爽感，可适度使用游戏术语。',
+ '军事':'本作为军事题材。军事术语、编制、装备和战术描写专业可信，场面硬朗热血，突出纪律、战友情与家国情怀。',
+ '灵异':'本作为灵异题材。营造阴森诡谲的氛围，多用感官细节与留白制造恐惧，规则与禁忌设定一致，恐怖张弛有度。'};
+const ACTIONS=[
+ {k:'continue',n:'续写',i:'➡️'},{k:'expand',n:'扩写',i:'🌱'},{k:'polish',n:'润色',i:'✨'},{k:'style',n:'改写风格',i:'🎭'},
+ {k:'dialogue',n:'生成对话',i:'💬'},{k:'brainstorm',n:'头脑风暴',i:'💡'},{k:'outline',n:'章节大纲',i:'🗂️'},{k:'title',n:'起书名',i:'🏷️'}];
+const DEF_TPL={
+ continue:'请紧接下文自然续写约 600 字，保持人物性格、叙事视角与文风一致，只输出正文。\n{{extra}}\n\n【前文】\n{{before}}',
+ expand:'请将下面这段扩写得更丰满（细节、动作、环境、心理），篇幅约为原文 2-3 倍，只输出扩写后的正文。\n{{extra}}\n\n【原文】\n{{selection}}',
+ polish:'请润色下面的文字：修正语病，使语言更流畅生动，保留原意和情节，只输出润色后的正文。\n{{extra}}\n\n【原文】\n{{selection}}',
+ style:'请用以下风格改写这段文字：{{extra}}（若未指定，则改为更有画面感的网文风格）。只输出改写后的正文。\n\n【原文】\n{{selection}}',
+ dialogue:'根据当前情节，为场景生成一段生动的人物对话，符合各人物性格，带少量动作神态描写。\n要求：{{extra}}\n\n【场景/前文】\n{{selection}}{{before}}',
+ brainstorm:'基于目前的故事，头脑风暴 5 个接下来的情节走向，每个包含：核心冲突、爽点/看点、可能的伏笔。\n{{extra}}\n\n【本章内容】\n{{chapter}}',
+ outline:'请为下一章（或指定章节）生成详细大纲：章节标题、3-6 个情节节拍、结尾钩子。\n{{extra}}\n\n【当前章节《{{title}}》】\n{{chapter}}',
+ title:'根据作品信息，起 10 个吸引人的书名（适合网文平台），每个附一句理由。\n{{extra}}'};
+
+let S=load();
+function load(){let s;try{s=JSON.parse(localStorage.getItem('wensi')||'null')}catch(e){}
+ s=s||{};s.projects=s.projects||[];s.presets=s.presets||JSON.parse(JSON.stringify(DEF_PRESETS));s.curPreset=s.curPreset||'deepseek';
+ s.tpl=Object.assign({},DEF_TPL,s.tpl||{});s.theme=s.theme||'light';s.goal=s.goal||3000;s.daily=s.daily||{};s.fs=s.fs||18;
+ s.genres=Object.assign({},GENRES,s.genres||{});DEF_PRESETS.forEach(d=>{if(!s.presets.some(p=>p.id===d.id))s.presets.push({...d})});s.fmt=s.fmt||{indent:true,blank:false,title:false};if(s.inject===undefined)s.inject=true;s.chat=s.chat||{};
+ if(!s.projects.length){const p=mkProject('我的第一部小说');s.projects.push(p);s.cur=p.id}
+ return s}
+let saveT;function save(now){clearTimeout(saveT);$('#saveState')&&($('#saveState').textContent='保存中…');
+ const f=()=>{try{localStorage.setItem('wensi',JSON.stringify(S));$('#saveState').textContent='已保存'}catch(e){toast('保存失败：存储空间不足？')}};
+ now?f():saveT=setTimeout(f,500)}
+function mkProject(t){const c={id:uid(),title:'第一章',content:'',status:'草稿'};
+ return {id:uid(),title:t,genre:'',synopsis:'',chapters:[c],cur:c.id,characters:[],world:[],outline:[],created:Date.now()}}
+const P=()=>S.projects.find(p=>p.id===S.cur)||S.projects[0];
+const C=()=>{const p=P();return p.chapters.find(c=>c.id===p.cur)||p.chapters[0]};
+const bookWC=p=>p.chapters.reduce((a,c)=>a+wc(c.content),0);
+
+/* ---------- tabs ---------- */
+function tab(t){$$('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+t));$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ $('#fab').classList.toggle('show',t==='write');S.tab=t;
+ ({works:renderWorks,write:renderWrite,bible:renderBible,ai:renderChat,settings:renderSettings})[t]()}
+$$('#tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+
+/* ---------- theme ---------- */
+function applyTheme(){const t=S.theme==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):S.theme;
+ document.documentElement.dataset.theme=t;document.querySelector('meta[name=theme-color]').content=t==='dark'?'#24211d':'#8a6a48';
+ document.documentElement.style.setProperty('--efs',S.fs+'px')}
+
+/* ---------- works ---------- */
+function renderGoal(){const n=S.daily[today()]||0,pc=Math.min(100,n/S.goal*100);$('#goalTxt').textContent=`${n} / ${S.goal} 字`+(n>=S.goal?' 🎉':'');$('#goalBar').style.width=pc+'%'}
+function renderWorks(){renderGoal();
+ $('#projList').innerHTML=S.projects.map(p=>{const st={草稿:0,已完成:0,已发布:0};p.chapters.forEach(c=>st[c.status||'草稿']++);
+ return `<div class="card" ${p.id===S.cur?'style="border-color:var(--acc2)"':''}><div class="row"><h3 class="grow">${esc(p.title)} ${p.id===S.cur?'<span class="tag">当前</span>':''}</h3></div>
+ <div class="muted">${esc(p.genre||'未分类')} · ${p.chapters.length} 章 · ${bookWC(p)} 字 · 已发布 ${st.已发布} / 已完成 ${st.已完成} / 草稿 ${st.草稿}</div>
+ <div class="muted" style="margin:6px 0">${esc((p.synopsis||'').slice(0,80))}</div>
+ <div class="row"><button class="sm pri" onclick="openProject('${p.id}')">开始写作</button><button class="sm" onclick="S.cur='${p.id}';save();tab('bible')">设定</button><button class="sm danger" onclick="delProject('${p.id}')">删除</button></div></div>`}).join('')}
+function newProject(){const t=prompt('作品名称','新作品');if(!t)return;const p=mkProject(t);S.projects.unshift(p);S.cur=p.id;save();tab('bible')}
+function openProject(id){S.cur=id;save();tab('write')}
+function delProject(id){const p=S.projects.find(x=>x.id===id);if(!confirm(`删除《${p.title}》？此操作不可恢复（建议先导出备份）`))return;
+ S.projects=S.projects.filter(x=>x.id!==id);if(!S.projects.length)S.projects.push(mkProject('新作品'));if(S.cur===id)S.cur=S.projects[0].id;save();renderWorks()}
+
+/* ---------- write ---------- */
+const ed=$('#editor');let sel={s:0,e:0};
+function renderWrite(){const c=C();ed.value=c.content;$('#edTitle').value=c.title;$('#edStatus').value=c.status||'草稿';renderChapters();updWC()}
+function chapHTML(){const p=P();return `<div class="row" style="margin-bottom:6px"><b class="grow">《${esc(p.title)}》</b><button class="sm pri" onclick="addChapter()">＋ 新章</button></div>`+
+ p.chapters.map((c,i)=>`<div class="list-item ${c.id===p.cur?'cur':''}"><div class="grow" onclick="pickChap('${c.id}')" style="cursor:pointer"><div>${esc(c.title||'无标题')}</div><div class="muted">${wc(c.content)} 字</div></div>
+ <span class="tag st-${c.status||'草稿'}">${c.status||'草稿'}</span>
+ <button class="sm ghost" onclick="mvChap(${i},-1)">↑</button><button class="sm ghost" onclick="mvChap(${i},1)">↓</button><button class="sm ghost danger" onclick="delChap('${c.id}')">✕</button></div>`).join('')}
+function renderChapters(){$('#chapSide').innerHTML=chapHTML();$('#chapSheetBody').innerHTML=chapHTML()}
+function pickChap(id){P().cur=id;save();renderWrite();closeSheets()}
+function addChapter(){const p=P(),c={id:uid(),title:`第${p.chapters.length+1}章`,content:'',status:'草稿'};p.chapters.push(c);p.cur=c.id;save();renderWrite();closeSheets();$('#edTitle').focus()}
+function mvChap(i,d){const a=P().chapters,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];save();renderChapters()}
+function delChap(id){const p=P();if(p.chapters.length<2)return toast('至少保留一章');const c=p.chapters.find(x=>x.id===id);
+ if(!confirm(`删除「${c.title}」？`))return;p.chapters=p.chapters.filter(x=>x.id!==id);if(p.cur===id)p.cur=p.chapters[0].id;save();renderWrite()}
+function updWC(){const c=C();$('#wcChap').textContent=`本章 ${wc(c.content)} 字`;$('#wcBook').textContent=`全书 ${bookWC(P())} 字`;
+ const n=S.daily[today()]||0;$('#wcToday').textContent=`今日 ${n}/${S.goal}`}
+let lastLen=null;
+ed.addEventListener('input',()=>{const c=C(),nw=wc(ed.value),old=wc(c.content);if(nw>old)S.daily[today()]=(S.daily[today()]||0)+(nw-old);
+ c.content=ed.value;c.updated=Date.now();updWC();save();renderChaptersLazy()});
+let rcT;function renderChaptersLazy(){clearTimeout(rcT);rcT=setTimeout(renderChapters,1500)}
+['select','keyup','mouseup','touchend','blur'].forEach(ev=>ed.addEventListener(ev,()=>{sel={s:ed.selectionStart,e:ed.selectionEnd}}));
+$('#edTitle').oninput=e=>{C().title=e.target.value;save();renderChaptersLazy()};
+$('#edStatus').onchange=e=>{C().status=e.target.value;save();renderChapters();toast('状态：'+e.target.value)};
+
+/* ---------- clean format ---------- */
+function clean(text){const f=S.fmt;const ps=(text||'').replace(/\r/g,'').split('\n').map(l=>l.replace(/^[\s　]+|[\s　]+$/g,'')).filter(Boolean);
+ return ps.map(l=>(f.indent?'　　':'')+l).join(f.blank?'\n\n':'\n')}
+function copyText(t){if(navigator.clipboard&&isSecureContext)return navigator.clipboard.writeText(t).then(()=>toast('已复制'),()=>fallbackCopy(t));fallbackCopy(t)}
+function fallbackCopy(t){const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity=0;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();toast('已复制')}
+function copyChapter(){const c=C();copyText((S.fmt.title?c.title+'\n\n':'')+clean(c.content));}
+
+/* ---------- export / import ---------- */
+function dl(name,text,type='text/plain'){const b=new Blob([text],{type:type+';charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+const fn=s=>(s||'未命名').replace(/[\\/:*?"<>|]/g,'_');
+function exportJSON(){const p=P();dl(fn(p.title)+'.wensi.json',JSON.stringify({app:'wensi',version:1,projects:[p]},null,1),'application/json')}
+function exportAllJSON(){dl('文思全部作品备份-'+today()+'.json',JSON.stringify({app:'wensi',version:1,projects:S.projects},null,1),'application/json')}
+function chapText(c,fmt){return fmt==='md'?`## ${c.title}\n\n${(c.content||'').split('\n').filter(l=>l.trim()).join('\n\n')}`:`${c.title}\n\n${clean(c.content)}`}
+function exportBook(fmt){const p=P();const head=fmt==='md'?`# ${p.title}\n\n${p.synopsis?'> '+p.synopsis+'\n\n':''}`:`${p.title}\n\n`;
+ dl(fn(p.title)+'.'+fmt,head+p.chapters.map(c=>chapText(c,fmt)).join('\n\n\n'))}
+function exportChapter(fmt){const c=C();dl(fn(P().title+'-'+c.title)+'.'+fmt,chapText(c,fmt))}
+$('#impFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());const arr=d.projects||(d.chapters?[d]:null);if(!arr)throw 0;
+ arr.forEach(p=>{if(S.projects.some(x=>x.id===p.id))p.id=uid();['characters','world','outline'].forEach(k=>p[k]=p[k]||[]);p.cur=p.cur||p.chapters[0]?.id;S.projects.unshift(p)});
+ S.cur=arr[0].id;save(1);toast(`已导入 ${arr.length} 部作品`);tab('works')}catch(err){toast('导入失败：文件格式不正确')}e.target.value=''};
+
+/* ---------- bible ---------- */
+let bTab='info';
+$$('#bibleSeg button').forEach(b=>b.onclick=()=>{bTab=b.dataset.b;$$('#bibleSeg button').forEach(x=>x.classList.toggle('on',x===b));renderBible()});
+const BF={characters:[['name','姓名'],['traits','性格 / 特征'],['bg','背景 / 经历']],world:[['name','名称'],['desc','设定内容']],outline:[['name','情节点'],['desc','内容']]};
+function renderBible(){const p=P();$('#injectBible').checked=S.inject;
+ if(bTab==='info'){$('#bibleBody').innerHTML=`<div class="card"><label>书名</label><input data-f="title" value="${esc(p.title)}"><label>题材</label><div class="row"><select id="genreSel" class="grow"><option value="">（未选择）</option>${Object.keys(S.genres).map(g=>`<option ${g===p.genre?'selected':''}>${esc(g)}</option>`).join('')}<option value="__new">＋ 自定义题材…</option></select></div>
+ <label>题材风格提示词（会注入所有 AI 操作，可编辑，对所有同题材作品生效）</label><textarea id="genrePrompt" rows="4" ${p.genre?'':'disabled'}>${esc(S.genres[p.genre]||'')}</textarea><label>简介 / 核心卖点</label><textarea data-f="synopsis" rows="6">${esc(p.synopsis)}</textarea></div>`;
+  $$('#bibleBody [data-f]').forEach(i=>i.oninput=()=>{p[i.dataset.f]=i.value;save()});
+  $('#genreSel').onchange=e=>{let g=e.target.value;if(g==='__new'){g=(prompt('自定义题材名称（如：末世、种田）')||'').trim();if(!g){renderBible();return}if(!S.genres[g])S.genres[g]=`本作为${g}题材。`}p.genre=g;save();renderBible()};
+  $('#genrePrompt').oninput=e=>{if(p.genre){S.genres[p.genre]=e.target.value;save()}};return}
+ const arr=p[bTab],fs=BF[bTab];
+ $('#bibleBody').innerHTML=arr.map((it,i)=>`<div class="card"><details ${it._open?'open':''}><summary>${esc(it.name||'(未命名)')}</summary>${fs.map(([k,l],j)=>`<label>${l}</label>${j?`<textarea rows="3" data-i="${i}" data-k="${k}">${esc(it[k])}</textarea>`:`<input data-i="${i}" data-k="${k}" value="${esc(it[k])}">`}`).join('')}
+ <div class="row" style="margin-top:8px"><label class="switch"><input type="checkbox" data-i="${i}" data-k="off" ${it.off?'':'checked'}>注入AI</label><span class="grow"></span><button class="sm ghost" onclick="mvB(${i},-1)">↑</button><button class="sm ghost" onclick="mvB(${i},1)">↓</button><button class="sm danger" onclick="delB(${i})">删除</button></div></details></div>`).join('')+
+ `<button class="pri" style="width:100%" onclick="addB()">＋ 添加${{characters:'人物',world:'设定',outline:'情节点'}[bTab]}</button>`;
+ $$('#bibleBody [data-k]').forEach(el=>el.oninput=el.onchange=()=>{const it=arr[el.dataset.i];if(el.dataset.k==='off')it.off=!el.checked;else it[el.dataset.k]=el.value;save()})}
+function addB(){P()[bTab].push({id:uid(),name:'',_open:true});save();renderBible()}
+function delB(i){if(confirm('删除此条？')){P()[bTab].splice(i,1);save();renderBible()}}
+function mvB(i,d){const a=P()[bTab],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];save();renderBible()}
+$('#injectBible').onchange=e=>{S.inject=e.target.checked;save()};
+function bibleCtx(){const p=P();if(!S.inject)return '';let s=`【作品】《${p.title}》${p.genre?' 类型：'+p.genre:''}\n${p.synopsis?'简介：'+p.synopsis+'\n':''}`;
+ const on=a=>a.filter(x=>!x.off&&x.name);
+ if(on(p.characters).length)s+='\n【人物】\n'+on(p.characters).map(c=>`- ${c.name}：${c.traits||''}${c.bg?'；背景：'+c.bg:''}`).join('\n');
+ if(on(p.world).length)s+='\n【世界观】\n'+on(p.world).map(c=>`- ${c.name}：${c.desc||''}`).join('\n');
+ if(on(p.outline).length)s+='\n【大纲】\n'+on(p.outline).map((c,i)=>`${i+1}. ${c.name}：${c.desc||''}`).join('\n');return s}
+function sysPrompt(){const b=bibleCtx(),g=P().genre&&S.genres[P().genre];return '你是一位经验丰富的中文网络小说作家与编辑，文笔细腻，擅长人物塑造和节奏把控。直接输出所需内容，不要寒暄或解释。'+(g?'\n\n【题材要求】'+g:'')+(b?'\n\n以下是作品设定，请严格遵守：\n'+b:'')}
+
+/* ---------- LLM ---------- */
+const preset=()=>S.presets.find(p=>p.id===S.curPreset)||S.presets[0];
+let ctrl=null;
+async function streamChat(messages,onDelta,opts={}){const p=preset();if(!p.base||!p.model)throw new Error('请先在「设置」中配置模型');
+ ctrl=new AbortController();const url=p.base.replace(/\/+$/,'')+'/chat/completions';
+ const res=await fetch(url,{method:'POST',signal:ctrl.signal,headers:Object.assign({'Content-Type':'application/json'},p.key?{Authorization:'Bearer '+p.key}:{}),
+  body:JSON.stringify({model:p.model,messages,temperature:+p.temp,max_tokens:opts.max||+p.max||2000,stream:opts.stream!==false})});
+ if(!res.ok){let t='';try{t=await res.text()}catch(e){}throw new Error(`HTTP ${res.status} ${t.slice(0,300)}`)}
+ let full='';
+ if(!(res.headers.get('content-type')||'').includes('event-stream')){const j=await res.json();full=j.choices?.[0]?.message?.content||'';onDelta(full,full);return full}
+ const rd=res.body.getReader(),dec=new TextDecoder();let buf='';
+ while(true){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let lines=buf.split('\n');buf=lines.pop();
+  for(const l of lines){const t=l.trim();if(!t.startsWith('data:'))continue;const d=t.slice(5).trim();if(d==='[DONE]')return full;
+   try{const j=JSON.parse(d);const c=j.choices?.[0]?.delta?.content||j.choices?.[0]?.message?.content||'';if(c){full+=c;onDelta(c,full)}}catch(e){}}}
+ return full}
+function stopGen(){ctrl&&ctrl.abort()}
+function errMsg(e){if(e.name==='AbortError')return '（已停止）';if(e instanceof TypeError)return '网络请求失败：可能是跨域(CORS)限制、地址错误或网络问题。详见说明：用本地服务器打开页面，或 Ollama 设置 OLLAMA_ORIGINS=*';return e.message}
+
+/* ---------- AI sheet ---------- */
+let lastAction=null,aiBusy=false,undoStack=null;
+$('#aiGrid').innerHTML=ACTIONS.map(a=>`<button onclick="runAction('${a.k}')"><span>${a.i}</span>${a.n}</button>`).join('');
+function renderQP(){$$('.qp').forEach(q=>{q.innerHTML=S.presets.map(p=>`<option value="${p.id}" ${p.id===S.curPreset?'selected':''}>${esc(p.name)}${p.key||p.id==='ollama'?'':' ⚠未填Key'}</option>`).join('');q.onchange=()=>{S.curPreset=q.value;save();renderQP();toast('已切换到 '+preset().name)}})}
+function openSheet(id){renderQP();$('#sheetBg').classList.add('on');$('#'+id).classList.add('on')}
+function closeSheets(){$$('.sheet,.sheet-bg').forEach(x=>x.classList.remove('on'))}
+function openAI(){const n=sel.e-sel.s;$('#aiSelInfo').textContent=n?`已选 ${n} 字`:'光标处';openSheet('aiSheet')}
+function fill(t,v){return t.replace(/\{\{(\w+)\}\}/g,(_,k)=>v[k]??'')}
+async function runAction(k){if(!k||aiBusy)return;lastAction=k;const c=C(),txt=c.content;let {s,e}=sel;
+ const selection=txt.slice(s,e);const before=txt.slice(Math.max(0,(selection?s:e)-3000),selection?s:e),after=txt.slice(e,e+800);
+ if(['expand','polish','style'].includes(k)&&!selection)return toast('请先在正文中选中要处理的文字');
+ const msg=fill(S.tpl[k],{selection,before:(k==='dialogue'&&selection)?'':before,after,extra:$('#aiExtra').value,chapter:txt.slice(-6000),title:c.title});
+ $('#aiOutWrap').style.display='block';const out=$('#aiOut');out.textContent='';aiBusy=true;$('#aiStop').style.display='';
+ try{await streamChat([{role:'system',content:sysPrompt()},{role:'user',content:msg}],(d,f)=>{out.textContent=f;out.scrollTop=1e9})}
+ catch(err){out.textContent+='\n⚠️ '+errMsg(err)}finally{aiBusy=false;$('#aiStop').style.display='none'}}
+function applyAI(mode){const t=$('#aiOut').textContent.replace(/\n⚠️.*$/s,'');if(!t)return;const c=C();undoStack={id:c.id,content:c.content};
+ let v=c.content,{s,e}=sel;
+ if(mode==='replace'){if(s===e)return toast('没有选中文字');v=v.slice(0,s)+t+v.slice(e);sel={s,e:s+t.length}}
+ else if(mode==='insert'){const pos=e;const pre=v.slice(0,pos);const join=pre&&!pre.endsWith('\n')&&lastAction==='continue'?'':'';v=pre+join+t+v.slice(pos);sel={s:pos,e:pos+t.length}}
+ else{v=v.replace(/\s*$/,'')+(v.trim()?'\n':'')+t;sel={s:v.length,e:v.length}}
+ const add=wc(v)-wc(c.content);c.content=v;save();ed.value=v;updWC();$('#btnUndo').style.display='';closeSheets();toast('已写入正文'+(add>0?`（+${add}字，未计入今日码字）`:''))}
+function undoAI(){if(!undoStack)return;const c=P().chapters.find(x=>x.id===undoStack.id);if(c){c.content=undoStack.content;save();renderWrite()}undoStack=null;$('#btnUndo').style.display='none';toast('已撤销')}
+
+/* ---------- chat ---------- */
+const chatArr=()=>S.chat[S.cur]=S.chat[S.cur]||[];
+function renderChat(){renderQP();const a=chatArr();$('#msgs').innerHTML=a.length?a.map((m,i)=>`<div class="msg ${m.role==='user'?'u':'a'}">${esc(m.content)}${m.role!=='user'?`<div class="ops"><button class="sm" onclick="chatIns(${i},'insert')">插入光标处</button><button class="sm" onclick="chatIns(${i},'append')">追加末尾</button><button class="sm" onclick="copyText(chatArr()[${i}].content)">复制</button></div>`:''}</div>`).join(''):
+ '<div class="muted" style="text-align:center;margin-top:30vh">AI 已了解你的设定集与当前章节<br>问问它：这章节奏怎么样？下一章怎么写？</div>';$('#msgs').scrollTop=1e9}
+async function sendChat(){if(aiBusy){stopGen();return}const t=$('#chatInput').value.trim();if(!t)return;$('#chatInput').value='';const a=chatArr();a.push({role:'user',content:t});
+ const c=C();let sys=sysPrompt();if($('#chatCtx').checked)sys+=`\n\n【当前章节《${c.title}》正文（节选）】\n${c.content.slice(-6000)}`;
+ const m={role:'assistant',content:''};a.push(m);renderChat();const box=$$('#msgs .msg.a').pop();aiBusy=true;$('#chatSend').textContent='停止';
+ try{await streamChat([{role:'system',content:sys},...a.slice(-21,-1).map(({role,content})=>({role,content}))],(d,f)=>{m.content=f;box.firstChild.textContent=f;$('#msgs').scrollTop=1e9})}
+ catch(e){m.content+=(m.content?'\n':'')+'⚠️ '+errMsg(e)}finally{aiBusy=false;$('#chatSend').textContent='发送';save();renderChat()}}
+$('#chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendChat()}});
+function clearChat(){if(confirm('清空对话？')){S.chat[S.cur]=[];save();renderChat()}}
+function chatIns(i,mode){$('#aiOut').textContent=chatArr()[i].content;tab('write');applyAI(mode)}
+
+/* ---------- settings ---------- */
+function renderSettings(){$('#presetSel').innerHTML=S.presets.map(p=>`<option value="${p.id}" ${p.id===S.curPreset?'selected':''}>${esc(p.name)}</option>`).join('');
+ const p=preset();['name','base','key','model','temp','max'].forEach(k=>$('#p_'+k).value=p[k]??'');$('#testRes').textContent='';$('#modelHint').textContent=/volces|ark\./.test(p.base)?'豆包：填写模型 ID（如 doubao-seed-1-6-250615）或你在火山方舟控制台创建的推理接入点 ID（ep-xxxx）。Key 在方舟控制台「API Key 管理」获取。':'每个预设独立保存自己的 API Key，切换预设不会覆盖。';
+ $('#goalIn').value=S.goal;$('#fsIn').value=S.fs;$('#fIndent').checked=S.fmt.indent;$('#fBlank').checked=S.fmt.blank;$('#fTitle').checked=S.fmt.title;
+ $$('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.theme));
+ $('#tplList').innerHTML=ACTIONS.map(a=>`<details><summary>${a.i} ${a.n}</summary><textarea rows="6" data-tpl="${a.k}">${esc(S.tpl[a.k])}</textarea></details>`).join('');
+ $('#genreList').innerHTML=Object.keys(S.genres).map(g=>`<details><summary>${esc(g)}</summary><textarea rows="4" data-genre="${esc(g)}">${esc(S.genres[g])}</textarea></details>`).join('');$$('[data-genre]').forEach(t=>t.oninput=()=>{S.genres[t.dataset.genre]=t.value;save()});
+ $$('[data-tpl]').forEach(t=>t.oninput=()=>{S.tpl[t.dataset.tpl]=t.value;save()});
+ $('#storeSize').textContent='已用 '+((localStorage.getItem('wensi')||'').length/1024).toFixed(0)+' KB'}
+$('#presetSel').onchange=e=>{S.curPreset=e.target.value;save();renderSettings()};
+function savePreset(){const p=preset();['name','base','key','model'].forEach(k=>p[k]=$('#p_'+k).value.trim());p.temp=+$('#p_temp').value||0.8;p.max=+$('#p_max').value||2000;save(1);renderSettings();toast('已保存')}
+function addPreset(){const p={id:uid(),name:'自定义',base:'',key:'',model:'',temp:0.8,max:2000};S.presets.push(p);S.curPreset=p.id;save();renderSettings()}
+function delPreset(){if(S.presets.length<2)return;if(!confirm('删除此预设？'))return;S.presets=S.presets.filter(p=>p.id!==S.curPreset);S.curPreset=S.presets[0].id;save();renderSettings()}
+async function testConn(){savePreset();const r=$('#testRes');r.textContent='测试中…';const t0=Date.now();
+ try{const out=await streamChat([{role:'user',content:'请只回复：连接成功'}],(d,f)=>r.textContent='✅ '+f,{max:20});r.textContent=`✅ 连接成功（${Date.now()-t0}ms）：${out.slice(0,30)}`}
+ catch(e){r.textContent='❌ '+errMsg(e)}}
+$('#goalIn').onchange=e=>{S.goal=Math.max(100,+e.target.value||3000);save()};
+$('#fsIn').oninput=e=>{S.fs=+e.target.value;applyTheme();save()};
+['Indent','Blank','Title'].forEach(k=>$('#f'+k).onchange=e=>{S.fmt[k.toLowerCase()]=e.target.checked;save()});
+$$('#themeSeg button').forEach(b=>b.onclick=()=>{S.theme=b.dataset.v;applyTheme();save();renderSettings()});
+function resetTpl(){if(confirm('恢复全部默认模板？')){S.tpl={...DEF_TPL};save();renderSettings()}}
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',applyTheme);
+window.addEventListener('beforeunload',()=>save(1));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save(1)});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();save(1);toast('已保存')}});
+
+applyTheme();tab(S.tab||'write');
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
